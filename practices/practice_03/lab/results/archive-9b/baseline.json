@@ -1,0 +1,40 @@
+{
+  "request": {
+    "model": "qwen3.5:9b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "# Notify Mini\nУчебный сервис подписки. Подписчики хранятся в памяти процесса.\nВ service.py функция subscribe добавляет непустое имя в множество.\nПовторное добавление имени не создаёт дубликат.\n\nПроверка: make test.\nЗависимости: стандартная библиотека Python 3.10+.\n\n\nКакая CI-система запускает тесты проекта?"
+      }
+    ],
+    "stream": false,
+    "think": false,
+    "options": {
+      "temperature": 0.2,
+      "seed": 42,
+      "num_ctx": 4096,
+      "num_predict": 512
+    }
+  },
+  "response": {
+    "model": "qwen3.5:9b",
+    "created_at": "2026-10-08T21:48:42.812673775Z",
+    "message": {
+      "role": "assistant",
+      "content": "В предоставленном описании **не указано**, какая именно система непрерывной интеграции (CI) используется для запуска тестов.\n\nТекст содержит только следующие указания:\n*   Команда для проверки: `make test`.\n*   Зависимости: стандартная библиотека Python 3.10+.\n*   Описание логики работы сервиса (`service.py`, множество имен, функция `subscribe`).\n\nИнформация о конфигурации CI (например, GitHub Actions, GitLab CI, Jenkins или др.) отсутствует в данном фрагменте документации."
+    },
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 3910860003,
+    "load_duration": 2134621,
+    "prompt_eval_count": 100,
+    "prompt_eval_cached_count": 0,
+    "prompt_eval_duration": 447912000,
+    "eval_count": 115,
+    "eval_duration": 3371933000
+  },
+  "wall_seconds": 3.9171045729999605,
+  "load_seconds": 0.002134621,
+  "total_seconds": 3.910860003,
+  "decode_tokens_per_second": 34.10506673768429
+}
