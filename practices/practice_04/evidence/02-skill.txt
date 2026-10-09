@@ -1,0 +1,32 @@
+Skill test-driven-development успешно загружен.
+
+Файл writing-good-tests.md прочитан: /mnt/c/Users/user/Documents/avito_ai/ITMOv2/.opencode/skills/test-driven-development/writing-good-tests.md
+
+Кратко процедура skill:
+1. RED - Написать падающий тест для одного поведения
+2. Verify RED - Обязательно посмотреть, как тест падает (не ошибка, а именно fail)
+3. GREEN - Написать минимальный код для прохождения теста
+4. Verify GREEN - Обязательно запустить тест и убедиться, что он проходит
+5. REFACTOR - Только после зелёного: убрать дублирование, улучшить имена
+6. Повторить для следующего поведения
+
+Ключевые принципы:
+- NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+- Тест должен называть конкретный баг, который ловит
+- Assert на реальном поведении, не на моках
+- Моки только для медленных/внешних зависимостей
+
+Результат запуска тестов practice-checker:
+Running tests...
+PASS: nonexistent path returns ok: false
+PASS: existing file (not dir) returns ok: false
+PASS: valid directory (repo root) returns structured result with ok: true
+PASS: missing required artifacts make ok: false
+PASS: reflection.md optional
+PASS: subdirectory finds repo root via .git
+PASS: subdirectory finds repo root via opencode.json
+PASS: subdirectory with missing artifacts makes ok: false
+
+=== ALL TESTS PASSED ===
+
+Все 8 тестов прошли успешно.

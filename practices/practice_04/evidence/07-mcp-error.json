@@ -1,0 +1,6 @@
+{
+  "ok": false,
+  "error": "Path does not exist: practices/practice_04/does-not-exist",
+  "checked_root": "/mnt/c/Users/user/Documents/avito_ai/ITMOv2/practices/practice_04/does-not-exist",
+  "missing": []
+}
