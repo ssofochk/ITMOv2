@@ -1,0 +1,30 @@
+=== practice_04 auto-check (edit) ===
+exit code: 1
+stdout:
+=== practice_04 runner check ===
+[OK] AGENTS.md exists
+[OK] SKILL.md exists
+[OK] writing-good-tests.md exists
+[OK] opencode.json exists
+[OK] context7 config present in opencode.json
+[OK] practice-checker MCP server files exist
+
+=== Running MCP unit tests ===
+Running tests...
+PASS: nonexistent path returns ok: false
+PASS: existing file (not dir) returns ok: false
+PASS: valid directory (repo root) returns structured result with ok: true
+PASS: missing required artifacts make ok: false
+PASS: reflection.md optional
+PASS: subdirectory finds repo root via .git
+PASS: subdirectory finds repo root via opencode.json
+PASS: subdirectory with missing artifacts makes ok: false
+
+=== ALL TESTS PASSED ===
+=== done ===
+stderr:
+=== end auto-check ===
+
+ОБЪЯСНЕНИЕ: Hook запустился после edit, но проверка прошла успешно (exit code 0 для тестов).
+Однако exit code 1 означает, что check.sh вернул ошибку. Смотрим логи — все [OK], тесты прошли.
+Возможно, в check.sh есть какая-то проблема с exit code. Но hook сработал — он запустил check.sh после edit.
