@@ -1,50 +1,40 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Делим — Конституция проекта (SDD)
 
-## Core Principles
+## Базовые принципы
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Деньги в целых копейках
+- Все денежные значения хранятся и обрабатываются в целых копейках (`number`).
+- Округления запрещены; остаточные копейки распределяются детерминированно.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Детерминизм и проверяемость
+- Одинаковые входы → одинаковые выходы (балансы, переводы).
+- Порядки расчётов фиксированы (UUID-сортировка). История — по времени.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Инварианты состояния
+- Сумма долей расхода = его стоимость.
+- Сумма `net` по всем участникам = 0.
+- Ошибочные операции не изменяют состояние (атомарность).
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Типобезопасный контракт
+- UI ↔ Логика взаимодействуют через единый TS-контракт.
+- Ошибки типизированы, коды стабильны, локализация на UI.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Простота и фокус
+- Один счёт, одна валюта, без внешнего бэкенда.
+- Минимально необходимый UI, современный и доступный.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Технологические ограничения
+- Стек: React, TypeScript, Vite, Vitest, localStorage.
+- Формат хранения: `ApplicationState` JSON под ключом `delim:v1`.
+- Идентификаторы: UUID v4, `createdAt`: epoch ms.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Рабочий процесс (SDD)
+- Constitution → Specify → Clarify → Plan → Tasks → Analyze → Implement → Test.
+- SDD-артефакты находятся в `practices/practice_05/delim/specs/delim/`.
+- Интеграции Spec Kit запускаются локально; если CLI недоступен, этапы выполняются вручную на основе шаблонов `.specify`.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+- Любые изменения контракта требуют актуализации `docs/contract.md` и повторной проверки артефактов (Analyze).
+- Коммиты: согласование спецификаций ДО реализации; отдельный коммит SDD-артефактов; отдельный коммит реализации и тестов.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30
