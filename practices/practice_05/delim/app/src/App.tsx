@@ -72,6 +72,51 @@ function App() {
     if (res.ok) setState(res.value.state);
   };
 
+  // Edit flow state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editAmountRub, setEditAmountRub] = useState('');
+  const [editPayerId, setEditPayerId] = useState('');
+  const [editInvolved, setEditInvolved] = useState<Record<string, boolean>>({});
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const startEdit = (id: string) => {
+    const e = state.expenses.find(x => x.id === id);
+    if (!e) return;
+    setEditingId(id);
+    setEditTitle(e.title);
+    setEditAmountRub((e.amountCents / 100).toFixed(2));
+    setEditPayerId(e.payerId);
+    const involvedMap: Record<string, boolean> = {};
+    for (const pid of e.involvedIds) involvedMap[pid] = true;
+    setEditInvolved(involvedMap);
+    setEditError(null);
+  };
+
+  const toggleEditInvolved = (id: string) => setEditInvolved(prev => ({ ...prev, [id]: !prev[id] }));
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle('');
+    setEditAmountRub('');
+    setEditPayerId('');
+    setEditInvolved({});
+    setEditError(null);
+  };
+  const saveEdit = () => {
+    if (!editingId) return;
+    const amountCents = Math.round(parseFloat(editAmountRub.replace(',', '.')) * 100);
+    const inv = Object.keys(editInvolved).filter(id => editInvolved[id]);
+    const res = api.updateExpense(state, { expenseId: editingId, title: editTitle, amountCents, payerId: editPayerId, involvedIds: inv });
+    if (!res.ok) {
+      setEditError(res.error.message);
+      return;
+    }
+    setEditError(null);
+    setState(res.value.state);
+    cancelEdit();
+    setTab('expenses');
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -138,9 +183,44 @@ function App() {
           <ul className="cards">
             {expenses.map(e => (
               <li key={e.id} className="card">
-                <div className="title">{e.title}</div>
-                <div className="meta">{formatRub(e.amountCents)} • Плательщик: {participants.find(p => p.id === e.payerId)?.name ?? '—'} • Делят: {e.involvedIds.length}</div>
-                <div className="actions"><button onClick={() => removeExpense(e.id)}>Удалить</button></div>
+                {editingId === e.id ? (
+                  <div className="edit-form">
+                    <input placeholder="Название" value={editTitle} onChange={ev => setEditTitle(ev.target.value)} />
+                    <input placeholder="Сумма (руб)" value={editAmountRub} onChange={ev => setEditAmountRub(ev.target.value)} />
+                    <select value={editPayerId} onChange={ev => setEditPayerId(ev.target.value)}>
+                      <option value="">Плательщик</option>
+                      {participants.filter(p => !p.archived).map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <div className="involved">
+                      <div className="label">Кого касается расход:</div>
+                      <div className="chips">
+                        {participants.map(p => (
+                          <label key={p.id} className={editInvolved[p.id] ? 'chip active' : 'chip'}>
+                            <input type="checkbox" checked={!!editInvolved[p.id]} onChange={() => toggleEditInvolved(p.id)} />
+                            {p.name}{p.archived ? ' (архив)' : ''}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    {editPayerId && editInvolved[editPayerId] === false && <div className="hint">Плательщик оплатил за других</div>}
+                    {editError && <div className="error">{editError}</div>}
+                    <div className="actions">
+                      <button onClick={saveEdit}>Сохранить</button>
+                      <button onClick={cancelEdit}>Отмена</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="title">{e.title}</div>
+                    <div className="meta">{formatRub(e.amountCents)} • Плательщик: {participants.find(p => p.id === e.payerId)?.name ?? '—'} • Делят: {e.involvedIds.length}</div>
+                    <div className="actions">
+                      <button onClick={() => startEdit(e.id)}>Редактировать</button>
+                      <button onClick={() => removeExpense(e.id)}>Удалить</button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>
