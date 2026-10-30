@@ -1,4 +1,4 @@
-import { type ApplicationState, type Participant, type Expense, type AddExpenseInput, type BalanceRow, type Result, type TransferSuggestion, type UUID, type Cents, LOCAL_STORAGE_KEY } from '../contract/types';
+import { type ApplicationState, type Participant, type Expense, type AddExpenseInput, type UpdateExpenseInput, type BalanceRow, type Result, type TransferSuggestion, type UUID, type Cents, LOCAL_STORAGE_KEY } from '../contract/types';
 
 // Small helpers
 const now = (): number => Date.now();
@@ -87,6 +87,38 @@ export function addExpense(state: ApplicationState, input: AddExpenseInput): Res
   const expense: Expense = { id, title, amountCents: amount, payerId: payer.id, involvedIds: ids, createdAt: now() };
   const next: ApplicationState = { ...state, expenses: [expense, ...state.expenses], meta: { ...state.meta, updatedAt: now() } };
   return { ok: true, value: { state: next, expense } };
+}
+
+export function updateExpense(state: ApplicationState, input: UpdateExpenseInput): Result<{ state: ApplicationState; expense: Expense }> {
+  // Validate expense exists
+  const idx = state.expenses.findIndex(e => e.id === input.expenseId);
+  if (idx === -1) return { ok: false, error: { code: 'EXPENSE_NOT_FOUND', message: 'Расход не найден' } };
+  // Validate fields (same rules as addExpense)
+  const title = normalizeName(input.title);
+  if (!title) return { ok: false, error: { code: 'INVALID_EXPENSE_DESCRIPTION', message: 'Название расхода не может быть пустым' } };
+  const amount = input.amountCents;
+  if (!(amount > 0) || !Number.isFinite(amount)) {
+    return { ok: false, error: { code: 'INVALID_AMOUNT_ZERO_OR_NEGATIVE', message: 'Сумма расхода должна быть больше 0' } };
+  }
+  if (!Number.isInteger(amount)) {
+    return { ok: false, error: { code: 'VALIDATION', message: 'Сумма должна быть целым числом копеек' } };
+  }
+  if (amount > 9e15) {
+    return { ok: false, error: { code: 'VALIDATION', message: 'Сумма превышает допустимый предел' } };
+  }
+  const payer = state.participants.find(p => p.id === input.payerId && !p.archived);
+  if (!payer) return { ok: false, error: { code: 'PAYER_NOT_FOUND', message: 'Плательщик не найден или архивирован' } };
+  const ids = Array.from(new Set(input.involvedIds));
+  if (ids.length < 1) return { ok: false, error: { code: 'INVALID_SPLIT_AMONG', message: 'Нужно выбрать минимум одного участника расхода' } };
+  const allExist = ids.every(id => state.participants.some(p => p.id === id));
+  if (!allExist) return { ok: false, error: { code: 'INVALID_SPLIT_AMONG', message: 'Список участников расхода содержит несуществующие id' } };
+  // Preserve identity
+  const prev = state.expenses[idx];
+  const updated: Expense = { id: prev.id, createdAt: prev.createdAt, title, amountCents: amount, payerId: payer.id, involvedIds: ids } as Expense;
+  const nextExpenses = [...state.expenses];
+  nextExpenses[idx] = updated;
+  const next: ApplicationState = { ...state, expenses: nextExpenses, meta: { ...state.meta, updatedAt: now() } };
+  return { ok: true, value: { state: next, expense: updated } };
 }
 
 export function listExpenses(state: ApplicationState): Expense[] {
@@ -264,6 +296,7 @@ export const api = {
   removeParticipant,
   archiveParticipant,
   addExpense,
+  updateExpense,
   listExpenses,
   deleteExpense,
   computeBalances,

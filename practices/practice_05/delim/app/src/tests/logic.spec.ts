@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { api, emptyState } from '../logic';
-import { type ApplicationState, type Result, type BalanceRow } from '../contract/types';
+import { type ApplicationState, type Result, type BalanceRow, type UUID } from '../contract/types';
 
 function addP(state: ApplicationState, name: string): ApplicationState {
   const r = api.addParticipant(state, name);
@@ -206,6 +206,41 @@ describe('Делим — бизнес-логика', () => {
     const r = api.addExpense(s, { title: '', amountCents: 100, payerId: a, involvedIds: [a] });
     expect(r.ok).toBe(false);
     expect(s.expenses.length).toBe(0);
+  });
+
+  it('16. Обновление расхода — атомарность и сохранение идентичности', () => {
+    let s = emptyState();
+    s = addP(s, 'Аня');
+    s = addP(s, 'Боб');
+    const a = findId(s, 'Аня');
+    const b = findId(s, 'Боб');
+    const add = api.addExpense(s, { title: 'X', amountCents: 1000, payerId: a, involvedIds: [a, b] });
+    expect(add.ok).toBe(true);
+    s = add.ok ? add.value.state : s;
+    const eId = s.expenses[0].id as UUID;
+    const upd = api.updateExpense(s, { expenseId: eId, title: 'Y', amountCents: 2000, payerId: b, involvedIds: [a, b] });
+    expect(upd.ok).toBe(true);
+    const next = upd.ok ? upd.value.state : s;
+    const updated = next.expenses.find(e => e.id === eId)!;
+    expect(updated.title).toBe('Y');
+    expect(updated.amountCents).toBe(2000);
+    expect(updated.createdAt).toBe(s.expenses.find(e => e.id === eId)!.createdAt);
+  });
+
+  it('17. Обновление с ошибками — без мутаций', () => {
+    let s = emptyState();
+    s = addP(s, 'Аня');
+    const a = findId(s, 'Аня');
+    const add = api.addExpense(s, { title: 'X', amountCents: 1000, payerId: a, involvedIds: [a] });
+    s = add.ok ? add.value.state : s;
+    const eId = s.expenses[0].id as UUID;
+    const upd = api.updateExpense(s, { expenseId: eId, title: '', amountCents: 0, payerId: a, involvedIds: [] });
+    expect(upd.ok).toBe(false);
+    // serialize/deserialize roundtrip stays equivalent
+    const ser = api.serialize(s);
+    expect(ser.ok).toBe(true);
+    const back = api.deserialize(ser.ok ? ser.value : '');
+    expect(back.ok).toBe(true);
   });
 
   it('15. Демонстрационный пример', () => {

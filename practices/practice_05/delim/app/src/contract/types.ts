@@ -68,6 +68,14 @@ export interface AddExpenseInput {
   involvedIds: UUID[];
 }
 
+export interface UpdateExpenseInput {
+  expenseId: UUID;
+  title: string;
+  amountCents: Cents;
+  payerId: UUID;
+  involvedIds: UUID[];
+}
+
 // API surface
 export interface ContractAPI {
   addParticipant(state: ApplicationState, name: string): Result<{ state: ApplicationState; participant: Participant }>;
@@ -76,6 +84,7 @@ export interface ContractAPI {
   archiveParticipant(state: ApplicationState, participantId: UUID, archived: boolean): Result<{ state: ApplicationState }>;
 
   addExpense(state: ApplicationState, input: AddExpenseInput): Result<{ state: ApplicationState; expense: Expense }>;
+  updateExpense(state: ApplicationState, input: UpdateExpenseInput): Result<{ state: ApplicationState; expense: Expense }>;
   listExpenses(state: ApplicationState): Expense[];
   deleteExpense(state: ApplicationState, expenseId: UUID): Result<{ state: ApplicationState }>;
 
