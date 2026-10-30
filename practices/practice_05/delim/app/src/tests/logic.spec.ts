@@ -142,6 +142,8 @@ describe('Делим — бизнес-логика', () => {
     const a = findId(s, 'A');
     const r = api.addExpense(s, { title: 'X', amountCents: 0, payerId: a, involvedIds: [a] });
     expect(r.ok).toBe(false);
+    const r2 = api.addExpense(s, { title: 'X', amountCents: 100.5 as unknown as number, payerId: a, involvedIds: [a] });
+    expect(r2.ok).toBe(false);
   });
 
   it('9. Запрет расходов с несуществующим плательщиком', () => {
@@ -192,6 +194,9 @@ describe('Делим — бизнес-логика', () => {
     // Simulate corrupted payload
     const res = api.deserialize('{ broken json');
     expect(res.ok).toBe(false);
+    const badState = '{"schemaVersion":1,"participants":[],"expenses":[{"id":"bad","title":"x","amountCents":1,"payerId":"bad","involvedIds":["bad"],"createdAt":0}],"meta":{"createdAt":0,"updatedAt":0}}';
+    const res2 = api.deserialize(badState);
+    expect(res2.ok).toBe(false);
   });
 
   it('14. Отсутствие мутаций состояния при ошибках', () => {

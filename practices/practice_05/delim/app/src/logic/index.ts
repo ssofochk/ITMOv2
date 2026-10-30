@@ -66,6 +66,9 @@ export function addExpense(state: ApplicationState, input: AddExpenseInput): Res
   if (!(amount > 0) || !Number.isFinite(amount)) {
     return { ok: false, error: { code: 'INVALID_AMOUNT_ZERO_OR_NEGATIVE', message: 'Сумма расхода должна быть больше 0' } };
   }
+  if (!Number.isInteger(amount)) {
+    return { ok: false, error: { code: 'VALIDATION', message: 'Сумма должна быть целым числом копеек' } };
+  }
   if (amount > 9e15) {
     return { ok: false, error: { code: 'VALIDATION', message: 'Сумма превышает допустимый предел' } };
   }
@@ -76,7 +79,11 @@ export function addExpense(state: ApplicationState, input: AddExpenseInput): Res
   const allExist = ids.every(id => state.participants.some(p => p.id === id));
   if (!allExist) return { ok: false, error: { code: 'INVALID_SPLIT_AMONG', message: 'Список участников расхода содержит несуществующие id' } };
 
-  const id = genUUID();
+  let id = genUUID();
+  // ensure unique expense id
+  const existing = new Set(state.expenses.map(e => e.id));
+  let guard = 0;
+  while (existing.has(id) && guard++ < 3) id = genUUID();
   const expense: Expense = { id, title, amountCents: amount, payerId: payer.id, involvedIds: ids, createdAt: now() };
   const next: ApplicationState = { ...state, expenses: [expense, ...state.expenses], meta: { ...state.meta, updatedAt: now() } };
   return { ok: true, value: { state: next, expense } };
@@ -105,7 +112,11 @@ export function computeBalances(state: ApplicationState): Result<BalanceRow[]> {
 
   for (const e of state.expenses) {
     // payer adds full amount to paid
-    paid[e.payerId] = (paid[e.payerId] ?? 0) + e.amountCents;
+    const nextPaid = (paid[e.payerId] ?? 0) + e.amountCents;
+    if (!Number.isSafeInteger(nextPaid)) {
+      return { ok: false, error: { code: 'STATE_DATA_CORRUPTED', message: 'Переполнение суммы "заплатил"' } };
+    }
+    paid[e.payerId] = nextPaid;
 
     // split amounts deterministically
     const ids = [...e.involvedIds].sort(); // lexicographic by UUID
@@ -114,8 +125,19 @@ export function computeBalances(state: ApplicationState): Result<BalanceRow[]> {
     const remainder = e.amountCents % n;
     ids.forEach((id, idx) => {
       const share = base + (idx < remainder ? 1 : 0);
-      owed[id] = (owed[id] ?? 0) + share;
+      const nextOwed = (owed[id] ?? 0) + share;
+      if (!Number.isSafeInteger(nextOwed)) {
+        return; // will be caught below as corrupted
+      }
+      owed[id] = nextOwed;
     });
+    // quick check after distribution for any non-safe owed
+    for (const id of ids) {
+      const v = owed[id] ?? 0;
+      if (!Number.isSafeInteger(v)) {
+        return { ok: false, error: { code: 'STATE_DATA_CORRUPTED', message: 'Переполнение суммы "должен был"' } };
+      }
+    }
   }
 
   const balances: BalanceRow[] = state.participants.map(p => {
@@ -124,6 +146,9 @@ export function computeBalances(state: ApplicationState): Result<BalanceRow[]> {
   });
 
   const sumNet = balances.reduce((s, b) => s + b.netCents, 0);
+  if (!Number.isSafeInteger(sumNet)) {
+    return { ok: false, error: { code: 'STATE_DATA_CORRUPTED', message: 'Переполнение суммарного баланса' } };
+  }
   if (sumNet !== 0) {
     return { ok: false, error: { code: 'STATE_DATA_CORRUPTED', message: 'Сумма чистых балансов должна быть равна нулю' } };
   }
