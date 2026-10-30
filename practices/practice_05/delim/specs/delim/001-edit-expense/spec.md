@@ -128,7 +128,7 @@ As a user, after successful edit, balances and transfer suggestions recompute au
 
 ### Key Entities *(include if feature involves data)
 
-- UpdateExpenseInput: `{ expenseId: UUID; title: string; amountCents: Cents; payerId: UUID; involvedIds: UUID[] }` — validates per existing constraints in `docs/contract.md`.
+- UpdateExpenseInput: `{ expenseId: UUID; title: string; amountCents: Cents; payerId: UUID; involvedIds: UUID[] }` — валидируется по `docs/contract.md`; ошибки маппятся на UI сообщения per `docs/ui-spec-v2.md` §7/§8.
 - Expense (unchanged): `{ id, title, amountCents, payerId, involvedIds, createdAt }` — `id` and `createdAt` are immutable under edit.
 - ApplicationState (unchanged): `meta.updatedAt` MUST be updated on successful edit.
 
@@ -145,7 +145,7 @@ As a user, after successful edit, balances and transfer suggestions recompute au
 ## Assumptions
 
 - Users operate within a single account; no multi-currency.
-- Archived participants are hidden in selection lists for new expenses; in edit, previously involved archived participants may be shown with an "archived" indicator but cannot be newly added.
+- Archived participants are hidden in selection lists for new expenses; in edit, previously involved archived participants may be shown with an "archived" indicator but cannot be newly added; payer selection требует активного участника.
 - `localStorage` is available; if unavailable, the UI communicates limited functionality and edit saves fail gracefully.
 - No backend; all logic runs in the client per `docs/logic-spec-v2.md`.
 - Feature adds a new logic operation `updateExpense(state, input)` consistent with the existing contract patterns (`Result<{ state: ApplicationState; expense: Expense }>`). Contract doc changes, if needed, will be handled in Analyze phase per Governance.
