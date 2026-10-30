@@ -26,3 +26,12 @@ Legend:
 - [ ] T020 [US4] Manual check: save edit, reload, verify persistence
 - [ ] T021 [US5] Determinism check: repeated recompute yields identical outputs
 - [ ] T022 [P][US1] Demo script: edit existing expense end-to-end
+
+## Phase 4 — Non-functional & Invariants
+
+- [ ] T023 [US5] Deterministic transfers order: run suggestTransfers twice on same balances and assert identical UUID-ordered results (tests in app/src/tests/logic.spec.ts)
+- [ ] T024 [US1] Performance harness: measure updateExpense on typical dataset (≤100 expenses, ≤50 participants) and assert <200ms (app/src/tests/logic.spec.ts)
+- [ ] T025 [US3] Post-edit invariant: sum of netCents === 0 after update (app/src/tests/logic.spec.ts)
+- [ ] T026 [US3] Update error EXPENSE_NOT_FOUND: stale/missing id returns error and no state mutation (app/src/tests/logic.spec.ts)
+- [ ] T027 [US1] History order invariant: listExpenses remains createdAt desc after edit (app/src/tests/logic.spec.ts)
+- [ ] T028 [US4] Automated post-reload identity: serialize/deserialize after update preserves id and createdAt (app/src/tests/logic.spec.ts)

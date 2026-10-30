@@ -243,6 +243,73 @@ describe('Делим — бизнес-логика', () => {
     expect(back.ok).toBe(true);
   });
 
+  it('18. Детерминированный порядок переводов повторяем', () => {
+    let s = emptyState();
+    s = addP(s, 'A'); s = addP(s, 'B'); s = addP(s, 'C');
+    const a = findId(s, 'A'); const b = findId(s, 'B'); const c = findId(s, 'C');
+    const r = api.addExpense(s, { title: 'X', amountCents: 1234, payerId: c, involvedIds: [a, b, c] });
+    s = assertOk(r).state;
+    const balances = assertOk(api.computeBalances(s));
+    const t1 = assertOk(api.suggestTransfers(balances));
+    const t2 = assertOk(api.suggestTransfers(balances));
+    expect(JSON.stringify(t1)).toBe(JSON.stringify(t2));
+  });
+
+  it('19. NET сумм инвариант после обновления', () => {
+    let s = emptyState();
+    s = addP(s, 'A'); s = addP(s, 'B');
+    const a = findId(s, 'A'); const b = findId(s, 'B');
+    const add = api.addExpense(s, { title: 'X', amountCents: 1000, payerId: a, involvedIds: [a, b] });
+    s = assertOk(add).state;
+    const eId = s.expenses[0].id;
+    const upd = api.updateExpense(s, { expenseId: eId, title: 'Y', amountCents: 2000, payerId: b, involvedIds: [a, b] });
+    s = assertOk(upd).state;
+    const balances = assertOk(api.computeBalances(s));
+    const sum = balances.reduce((acc, b) => acc + b.netCents, 0);
+    expect(sum).toBe(0);
+  });
+
+  it('20. EXPENSE_NOT_FOUND при stale id', () => {
+    let s = emptyState();
+    s = addP(s, 'A');
+    const a = findId(s, 'A');
+    const r = api.updateExpense(s, { expenseId: '00000000-0000-4000-8000-000000000000', title: 'X', amountCents: 1000, payerId: a, involvedIds: [a] });
+    expect(r.ok).toBe(false);
+  });
+
+  it('21. Порядок истории по createdAt desc не меняется после edit', () => {
+    let s = emptyState();
+    s = addP(s, 'A'); s = addP(s, 'B');
+    const a = findId(s, 'A'); const b = findId(s, 'B');
+    const r1 = api.addExpense(s, { title: 'X1', amountCents: 1000, payerId: a, involvedIds: [a, b] });
+    s = assertOk(r1).state;
+    const r2 = api.addExpense(s, { title: 'X2', amountCents: 2000, payerId: b, involvedIds: [a, b] });
+    s = assertOk(r2).state;
+    const before = api.listExpenses(s).map(e => e.id);
+    const eId = before[0];
+    const upd = api.updateExpense(s, { expenseId: eId, title: 'Y', amountCents: 1500, payerId: a, involvedIds: [a, b] });
+    s = assertOk(upd).state;
+    const after = api.listExpenses(s).map(e => e.id);
+    expect(after).toEqual(before);
+  });
+
+  it('22. Автоматизированный пост-ресериализационный тест идентичности', () => {
+    let s = emptyState();
+    s = addP(s, 'A'); s = addP(s, 'B');
+    const a = findId(s, 'A'); const b = findId(s, 'B');
+    const add = api.addExpense(s, { title: 'X', amountCents: 1000, payerId: a, involvedIds: [a, b] });
+    s = assertOk(add).state;
+    const eId = s.expenses[0].id;
+    const upd = api.updateExpense(s, { expenseId: eId, title: 'Y', amountCents: 1200, payerId: b, involvedIds: [a, b] });
+    s = assertOk(upd).state;
+    const ser = assertOk(api.serialize(s));
+    const back = assertOk(api.deserialize(ser));
+    const e1 = s.expenses.find(e => e.id === eId)!;
+    const e2 = back.expenses.find(e => e.id === eId)!;
+    expect(e1.id).toBe(e2.id);
+    expect(e1.createdAt).toBe(e2.createdAt);
+  });
+
   it('15. Демонстрационный пример', () => {
     let s = emptyState();
     s = addP(s, 'Аня');
