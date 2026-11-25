@@ -1,0 +1,32 @@
+MCP tool вызван: context7_query-docs
+
+Запрос отправлен:
+- libraryId: /prefecthq/fastmcp
+- query: "How to declare a tool using @mcp.tool decorator and run a stdio server in FastMCP"
+
+Краткий полезный результат:
+1. Объявление tool через @mcp.tool:
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("Demo 🚀")
+
+@mcp.tool
+def add(a: int, b: int) -> int:
+    """Add two numbers"""
+    return a + b
+```
+- Декоратор автоматически генерирует MCP tool schema из сигнатуры функции и type annotations
+- Параметры без defaults — required, с defaults — optional
+- Поддерживаются: int, float, str, bool, bytes, datetime, list[T], dict[K,V], Optional[T], Literal, Enum, Path, UUID, Pydantic models
+
+2. Запуск stdio server:
+```python
+if __name__ == "__main__":
+    mcp.run()
+```
+- mcp.run() по умолчанию использует STDIO transport
+- if __name__ guard нужен для совместимости с MCP клиентами, запускающими сервер как subprocess
+- Также доступны HTTP и SSE транспорты
+
+Источник: https://github.com/prefecthq/fastmcp/blob/main/README.md и docs/servers/tools.mdx
