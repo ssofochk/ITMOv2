@@ -32,21 +32,23 @@ class ShopTest(unittest.TestCase):
     def test_tokens_identify_distinct_users(self):
         alice, bob = self.login(), self.login("bob", "learn-bob")
         self.assertNotEqual(alice, bob)
-        self.assertEqual(self.request("GET", "/profile?id=1", headers=alice)[1][0]["name"], "TEST_ALICE")
-        self.assertEqual(self.request("GET", "/profile?id=2", headers=bob)[1][0]["name"], "TEST_BOB")
+        # profile endpoint ignores id parameter and returns own profile only
+        self.assertEqual(self.request("GET", "/profile?id=2", headers=alice)[1][0]["name"], "TEST_ALICE")
+        self.assertEqual(self.request("GET", "/profile?id=1", headers=bob)[1][0]["name"], "TEST_BOB")
 
     def test_staff_can_export_with_staff_session(self):
-        auth = {**self.login("staff", "learn-staff"), "X-Role": "staff"}
+        auth = self.login("staff", "learn-staff")
         status, profiles = self.request("GET", "/admin/export", headers=auth)
         self.assertEqual(status, 200)
         self.assertEqual(len(profiles), 2)
 
     def test_own_profile_and_receipt(self):
         auth = self.login()
-        status, profile = self.request("GET", "/profile?id=1", headers=auth)
+        status, profile = self.request("GET", "/profile?id=2", headers=auth)
         self.assertEqual(status, 200)
         self.assertEqual(profile[0]["name"], "TEST_ALICE")
-        status, receipt = self.request("GET", "/files?user=alice&path=receipt.txt", headers=auth)
+        # files endpoint ignores user/path and returns only own receipt
+        status, receipt = self.request("GET", "/files?user=bob&path=../private/operator-note.txt", headers=auth)
         self.assertEqual(status, 200)
         self.assertIn("TEST_ALICE", receipt["content"])
 
@@ -69,10 +71,61 @@ class ShopTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("chair", context["prompt"])
         status, result = self.request("POST", "/assistant/execute", {
-            "decision": {"tool": "read_file", "arguments": {"path": "files/alice/receipt.txt"}}
+            # server ignores path and returns own receipt
+            "decision": {"tool": "read_file", "arguments": {"path": "files/bob/receipt.txt"}}
         }, auth)
         self.assertEqual(status, 200)
         self.assertIn("TEST_ALICE", result["content"])
+
+    def test_customer_cannot_list_others_orders(self):
+        alice = self.login()
+        # Bob places an order to ensure there is at least one foreign order
+        bob = self.login("bob", "learn-bob")
+        self.assertEqual(self.request("POST", "/orders", {"product": "lamp"}, bob)[0], 201)
+        status, orders = self.request("GET", "/orders", headers=alice)
+        self.assertEqual(status, 200)
+        # Only Alice's orders are visible (owner == 1)
+        self.assertTrue(all(order["owner"] == 1 for order in orders))
+
+    def test_non_staff_cannot_export_or_view_logs(self):
+        auth = self.login()
+        self.assertEqual(self.request("GET", "/admin/export", headers=auth)[0], 403)
+        self.assertEqual(self.request("GET", "/debug/logs", headers=auth)[0], 403)
+
+    def test_staff_can_view_logs(self):
+        staff = self.login("staff", "learn-staff")
+        status, logs = self.request("GET", "/debug/logs", headers=staff)
+        self.assertEqual(status, 200)
+        self.assertIsInstance(logs, list)
+
+    def test_search_requires_staff_and_is_parameterized(self):
+        # Non-staff forbidden
+        self.assertEqual(self.request("GET", "/search?q=%' OR 1=1 --", headers=self.login())[0], 403)
+        # Staff allowed, returns list without SQL error
+        staff = self.login("staff", "learn-staff")
+        status, rows = self.request("GET", "/search?q=%' OR 1=1 --", headers=staff)
+        self.assertEqual(status, 200)
+        self.assertIsInstance(rows, list)
+
+    def test_assistant_delete_tree_forbidden_for_non_staff(self):
+        auth = self.login()
+        status, result = self.request(
+            "POST",
+            "/assistant/execute",
+            {"decision": {"tool": "delete_tree", "arguments": {"path": "."}}},
+            headers=auth,
+        )
+        self.assertEqual(status, 403)
+        self.assertEqual(result["error"], "staff only")
+
+    def test_reviews_view_escapes_html(self):
+        auth = self.login()
+        payload = {"product": "chair", "text": "<script>alert(1)</script>"}
+        self.assertEqual(self.request("POST", "/reviews", payload, auth)[0], 201)
+        status, html = self.request("GET", "/reviews/view", headers=auth)
+        self.assertEqual(status, 200)
+        self.assertNotIn("<script>", html)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", html)
 
 
 class SandboxTest(unittest.TestCase):

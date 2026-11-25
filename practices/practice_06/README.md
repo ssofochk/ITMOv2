@@ -4,7 +4,7 @@
 
 ### Часть занятия с преподом
 
-Препод рассказывает что ориентир — [моделирование угроз Microsoft](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-getting-started): описание системы, поиск угроз, меры защиты и проверка. На занятии строим эту модель в markdown и/или mermaid.live
+Препод рассказывает что ориентир — [моделирование угроз Microsoft](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-getting-started): описание системы, поиск угроз, меры защиты и проверка. На занятии строим эту модель в markdown и/или mermaid.live. Смотри пример: [THREAT_MODEL.md](./THREAT_MODEL.md)
 
 Препод рисует модно стильно молодёжно вместе с аудиторией какой-нибудь сервис с AI интеграцией и симулирует вектора атаки: ПДн, 152-ФЗ, prompt injections, llm as judge и прочие приколы
 
