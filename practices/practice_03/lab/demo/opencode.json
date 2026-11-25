@@ -22,7 +22,7 @@
   },
   "agent": {
     "local-guide": {
-      "description": "Read-only local repository assistant",
+      "description": "Read-only local repository qwen3.5:4b",
       "mode": "primary",
       "prompt": "{file:./repo-system.txt}",
       "steps": 8,

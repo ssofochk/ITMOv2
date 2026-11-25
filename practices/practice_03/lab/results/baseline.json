@@ -1,0 +1,40 @@
+{
+  "request": {
+    "model": "qwen3.5:4b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "# Notify Mini\nУчебный сервис подписки. Подписчики хранятся в памяти процесса.\nВ service.py функция subscribe добавляет непустое имя в множество.\nПовторное добавление имени не создаёт дубликат.\n\nПроверка: make test.\nЗависимости: стандартная библиотека Python 3.10+.\n\n\nКакая CI-система запускает тесты проекта?"
+      }
+    ],
+    "stream": false,
+    "think": false,
+    "options": {
+      "temperature": 0.2,
+      "seed": 42,
+      "num_ctx": 4096,
+      "num_predict": 512
+    }
+  },
+  "response": {
+    "model": "qwen3.5:4b",
+    "created_at": "2026-10-08T23:42:37.675093271Z",
+    "message": {
+      "role": "assistant",
+      "content": "В предоставленном описании задачи **не указана конкретная CI-система** (например, GitHub Actions, GitLab CI, Jenkins и т.д.).\n\nОписание содержит только требования к функционалу (`service.py`, множество, проверка через `make test`) и зависимости (стандартная библиотека Python 3.10+), но не упоминает инструменты для автоматизации тестирования в репозитории.\n\nЧтобы определить, какая CI-система используется, обычно нужно:\n1. Посмотреть на **`.github/workflows/`** (для GitHub Actions).\n2. Проверить файл **`.gitlab-ci.yml`** (для GitLab CI).\n3. Найти конфигурацию в файле **`Jenkinsfile`** или `.travis.yml` / `.circleci/config.yml`.\n\nЕсли это учебное задание из конкретного курса или платформы, то CI-система может быть настроена преподавателем или платформой автоматически, но без доступа к репозиторию проекта точного ответа дать невозможно."
+    },
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 8379227100,
+    "load_duration": 4686568686,
+    "prompt_eval_count": 100,
+    "prompt_eval_cached_count": 0,
+    "prompt_eval_duration": 219355000,
+    "eval_count": 221,
+    "eval_duration": 3467178000
+  },
+  "wall_seconds": 8.394427809998888,
+  "load_seconds": 4.686568686,
+  "total_seconds": 8.3792271,
+  "decode_tokens_per_second": 63.74059826175639
+}
